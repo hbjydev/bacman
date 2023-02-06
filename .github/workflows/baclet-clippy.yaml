@@ -22,6 +22,20 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Run Clippy
-        working-directory: ./baclet
-        run: cargo clippy --all-targets --all-features
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          components: clippy,rustfmt
+          override: true
+
+      - uses: Swatinem/rust-cache@v1
+
+      - run: cargo install clippy-sarif sarif-fmt
+      - run: cargo clippy --all-targets --all-features --message-format=json |
+          clippy-sarif | tee results.sarif | sarif-fmt
+
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: results.sarif

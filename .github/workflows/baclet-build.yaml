@@ -25,11 +25,32 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Build
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          components: clippy,rustfmt
+          override: true
+
+      - uses: Swatinem/rust-cache@v1
+
+      - run: cargo build --release --verbose
         working-directory: ./baclet
-        run: cargo build --release --verbose
 
       - uses: actions/upload-artifact@v3
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         with:
-          name: baclet-${{ matrix.os }}
+          name: baclet-linux-amd64
           path: baclet/target/release/baclet
+
+      - uses: actions/upload-artifact@v3
+        if: ${{ matrix.os == 'macos-latest' }}
+        with:
+          name: baclet-darwin-amd64
+          path: baclet/target/release/baclet
+
+      - uses: actions/upload-artifact@v3
+        if: ${{ matrix.os == 'windows-latest' }}
+        with:
+          name: baclet-windows-amd64
+          path: baclet/target/release/baclet.exe
