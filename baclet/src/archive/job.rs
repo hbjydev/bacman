@@ -1,12 +1,13 @@
+use std::io;
 use std::fs::{File, metadata};
 use crate::archive::schema::ArchiveJobSpec;
 use flate2::Compression;
 use flate2::write::GzEncoder;
 
 pub enum ArchiveJobRunError {
-    FileMetadataError(std::io::Error),
-    CreateFileError(std::io::Error),
-    AppendToTarError(std::io::Error),
+    FileMetadataError(io::Error),
+    CreateFileError(io::Error),
+    AppendToTarError(io::Error),
 }
 
 pub struct ArchiveJob {
@@ -24,27 +25,21 @@ impl ArchiveJob {
 
     pub fn run(&self) -> Result<bool, ArchiveJobRunError> {
         if let Some(spec) = &self.spec.archive_job {
-            let is_dir = match self.is_dir(spec.clone()) {
-                Ok(v) => v,
-                Err(e) => return Err(ArchiveJobRunError::FileMetadataError(e)),
-            };
+            let is_dir = self.is_dir(spec.clone())
+                .map_err(ArchiveJobRunError::FileMetadataError)?;
 
             if is_dir {
                 log::debug!("creating tar.gz file");
-                let tar_gz = match File::create(spec.dest.clone()) {
-                    Ok(v) => v,
-                    Err(e) => return Err(ArchiveJobRunError::CreateFileError(e)),
-                };
+                let tar_gz = File::create(spec.dest.clone())
+                    .map_err(ArchiveJobRunError::CreateFileError)?;
 
                 log::debug!("creating gz encoder");
                 let enc = GzEncoder::new(tar_gz, Compression::default());
                 
                 log::debug!("filling gzipped tarball with directory contents");
                 let mut tar = tar::Builder::new(enc);
-                match tar.append_dir_all(".", spec.src.clone()) {
-                    Ok(v) => v,
-                    Err(e) => return Err(ArchiveJobRunError::AppendToTarError(e)),
-                };
+                tar.append_dir_all(".", spec.src.clone())
+                    .map_err(ArchiveJobRunError::AppendToTarError)?;
             } else {
                 log::warn!("non-directory backups aren't supported yet.");
                 return Ok(false);

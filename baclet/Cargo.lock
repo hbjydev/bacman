@@ -46,6 +46,7 @@ dependencies = [
  "serde_with",
  "serde_yaml",
  "tar",
+ "thiserror",
 ]
 
 [[package]]

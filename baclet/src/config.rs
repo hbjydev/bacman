@@ -53,15 +53,11 @@ pub enum BacletConfigInitError {
 
 impl BacletConfig {
     pub fn from_file(path: &PathBuf) -> Result<BacletConfig, BacletConfigInitError> {
-        let config_content = match std::fs::read_to_string(path) {
-            Ok(c) => c,
-            Err(e) => return Err(BacletConfigInitError::FileError(e)),
-        };
+        let config_content = std::fs::read_to_string(path)
+            .map_err(BacletConfigInitError::FileError)?;
 
-        let config = match serde_yaml::from_str::<BacletConfig>(&config_content) {
-            Ok(c) => c,
-            Err(e) => return Err(BacletConfigInitError::DeserializeError(e)),
-        };
+        let config = serde_yaml::from_str::<BacletConfig>(&config_content)
+            .map_err(BacletConfigInitError::DeserializeError)?;
 
         Ok(config)
     }
