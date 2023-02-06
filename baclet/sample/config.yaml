@@ -1,0 +1,11 @@
+---
+apiVersion: bacman.io/baclet/v1alpha1
+kind: BacletConfig
+
+spec:
+  jobs:
+    - name: var-log
+      schedule: '*/5 * * * *'  # every 5 minutes
+      archiveJob:
+        src: /var/log
+        compression: xz
