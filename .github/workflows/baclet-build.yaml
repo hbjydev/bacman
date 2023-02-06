@@ -22,8 +22,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+
       - name: Build
-        run: cd baclet && cargo build --release
+        working-directory: ./baclet
+        run: cargo build --release --verbose
+
       - uses: actions/upload-artifact@v3
         with:
           name: baclet-${{ matrix.os }}
