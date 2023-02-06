@@ -1,10 +1,11 @@
 ---
 on:
   push:
-    paths: &baclet-paths
+    paths:
       - 'baclet/**'
   pull_request:
-    paths: *baclet-paths
+    paths:
+      - 'baclet/**'
 
 env:
   CARGO_TERM_COLOR: always
