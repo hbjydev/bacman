@@ -26,5 +26,5 @@ jobs:
         run: cd baclet && cargo build --release
       - uses: actions/upload-artifact@v3
         with:
-          name: baclet-linux-amd64
+          name: baclet-${{ matrix.os }}
           path: baclet/target/release/baclet
