@@ -1,0 +1,23 @@
+---
+apiVersion: bacman.io/baclet/v1alpha1
+kind: BacletConfig
+
+spec:
+  jobs:
+    - name: test-backup
+      schedule: '*/5 * * * *'  # every 5 minutes
+      archiveJob:
+        src: /tmp/backup
+        dest: /tmp/backup.tgz
+
+    - name: test-backup2
+      schedule: '*/5 * * * *'  # every 5 minutes
+      archiveJob:
+        src: /tmp/backup2
+        dest: /tmp/backup2.tgz
+
+    - name: var-log
+      schedule: '*/5 * * * *'  # every 5 minutes
+      archiveJob:
+        src: /var/log
+        dest: /tmp/var-log.tgz
