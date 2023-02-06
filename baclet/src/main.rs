@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use clap::{arg, value_parser, Command};
 
+pub mod job;
 pub mod archive;
 pub mod config;
 
@@ -57,31 +58,18 @@ fn main() {
     log::debug!("config: {:?}", config);
 
     config.spec.jobs.iter().for_each(|js| {
-        match js.job_spec {
-            config::BacletJobType::ArchiveJob(_) => {
-                let job = archive::job::ArchiveJob::init(js.clone());
-                match job.run() {
-                    Ok(v) => log::info!("archive job finished?: {}", v),
-                    Err(e) => {
-                        match e {
-                            archive::job::ArchiveJobRunError::CreateFileError(e) => {
-                                log::error!("failed to create archive placeholder: {}", e);
-                                std::process::exit(1);
-                            },
+        log::info!("starting job \"{}\"", js.name);
+        let job = match js.job_spec {
+            config::BacletJobType::ArchiveJob(_) =>
+                archive::job::ArchiveJob::init(js.clone()),
+        };
 
-                            archive::job::ArchiveJobRunError::FileMetadataError(e) => {
-                                log::error!("failed to retrieve metadata for source: {}", e);
-                                std::process::exit(1);
-                            },
-
-                            archive::job::ArchiveJobRunError::AppendToTarError(e) => {
-                                log::error!("failed to fill the archive: {}", e);
-                                std::process::exit(1);
-                            },
-                        }
-                    }
-                };
-            },
-        }
+        match job::JobType::run(&job) {
+            Ok(_) => log::info!("backup job \"{}\" finished", js.name),
+            Err(e) => {
+                log::error!("failed to run backup \"{}\": {:?}", js.name, e);
+                std::process::exit(1);
+            }
+        };
     });
 }

@@ -2,16 +2,13 @@ use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum ArchiveJobCompression {
-    #[serde(rename = "xz")]
-    XZ,
-
     #[serde(rename = "gzip")]
     GZip,
 }
 
 impl Default for ArchiveJobCompression {
     fn default() -> Self {
-        ArchiveJobCompression::XZ
+        ArchiveJobCompression::GZip
     }
 }
 
