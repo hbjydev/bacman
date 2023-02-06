@@ -32,7 +32,7 @@ pub struct BacletConfig {
 
 /// A specification for a backup job
 #[skip_serializing_none]
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct BacletJobSpec {
     /// The programmatic name of the job
     pub name: String,

@@ -57,9 +57,7 @@ fn main() {
     log::debug!("config: {:?}", config);
 
     if let Some(job_spec) = config.spec.jobs.get(0) {
-        let job = archive::job::ArchiveJob::init(
-            job_spec.archive_job.clone().unwrap()
-        );
+        let job = archive::job::ArchiveJob::init(job_spec.clone());
 
         match job.run() {
             Ok(v) => log::info!("archive job finished?: {}", v),
