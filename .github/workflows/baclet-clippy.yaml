@@ -5,9 +5,11 @@ on:
       - '**'
     paths:
       - 'baclet/**'
+      - '.github/workflows/baclet-clippy.yaml'
   pull_request:
     paths:
       - 'baclet/**'
+      - '.github/workflows/baclet-clippy.yaml'
 
 env:
   CARGO_TERM_COLOR: always

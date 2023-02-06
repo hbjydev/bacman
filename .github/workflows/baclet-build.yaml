@@ -5,9 +5,11 @@ on:
       - '**'
     paths:
       - 'baclet/**'
+      - '.github/workflows/baclet-build.yaml'
   pull_request:
     paths:
       - 'baclet/**'
+      - '.github/workflows/baclet-build.yaml'
 
 env:
   CARGO_TERM_COLOR: always
