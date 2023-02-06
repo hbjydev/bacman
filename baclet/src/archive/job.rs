@@ -3,6 +3,7 @@ use std::fs::{File, metadata};
 use crate::archive::schema::ArchiveJobSpec;
 use flate2::Compression;
 use flate2::write::GzEncoder;
+use crate::config::BacletJobType;
 
 pub enum ArchiveJobRunError {
     FileMetadataError(io::Error),
@@ -24,29 +25,27 @@ impl ArchiveJob {
     }
 
     pub fn run(&self) -> Result<bool, ArchiveJobRunError> {
-        if let Some(spec) = &self.spec.archive_job {
-            let is_dir = self.is_dir(spec.clone())
-                .map_err(ArchiveJobRunError::FileMetadataError)?;
+        let BacletJobType::ArchiveJob(spec) = &self.spec.job_spec;
 
-            if is_dir {
-                log::debug!("creating tar.gz file");
-                let tar_gz = File::create(spec.dest.clone())
-                    .map_err(ArchiveJobRunError::CreateFileError)?;
+        let is_dir = self.is_dir(spec.clone())
+            .map_err(ArchiveJobRunError::FileMetadataError)?;
 
-                log::debug!("creating gz encoder");
-                let enc = GzEncoder::new(tar_gz, Compression::default());
-                
-                log::debug!("filling gzipped tarball with directory contents");
-                let mut tar = tar::Builder::new(enc);
-                tar.append_dir_all(".", spec.src.clone())
-                    .map_err(ArchiveJobRunError::AppendToTarError)?;
-            } else {
-                log::warn!("non-directory backups aren't supported yet.");
-                return Ok(false);
-            }
-            return Ok(true)
+        if is_dir {
+            log::debug!("creating tar.gz file");
+            let tar_gz = File::create(spec.dest.clone())
+                .map_err(ArchiveJobRunError::CreateFileError)?;
+
+            log::debug!("creating gz encoder");
+            let enc = GzEncoder::new(tar_gz, Compression::default());
+            
+            log::debug!("filling gzipped tarball with directory contents");
+            let mut tar = tar::Builder::new(enc);
+            tar.append_dir_all(".", spec.src.clone())
+                .map_err(ArchiveJobRunError::AppendToTarError)?;
+        } else {
+            log::warn!("non-directory backups aren't supported yet.");
+            return Ok(false);
         }
-
-        Ok(false)
+        Ok(true)
     }
 }

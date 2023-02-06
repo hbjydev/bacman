@@ -56,29 +56,32 @@ fn main() {
 
     log::debug!("config: {:?}", config);
 
-    if let Some(job_spec) = config.spec.jobs.get(0) {
-        let job = archive::job::ArchiveJob::init(job_spec.clone());
+    config.spec.jobs.iter().for_each(|js| {
+        match js.job_spec {
+            config::BacletJobType::ArchiveJob(_) => {
+                let job = archive::job::ArchiveJob::init(js.clone());
+                match job.run() {
+                    Ok(v) => log::info!("archive job finished?: {}", v),
+                    Err(e) => {
+                        match e {
+                            archive::job::ArchiveJobRunError::CreateFileError(e) => {
+                                log::error!("failed to create archive placeholder: {}", e);
+                                std::process::exit(1);
+                            },
 
-        match job.run() {
-            Ok(v) => log::info!("archive job finished?: {}", v),
-            Err(e) => {
-                match e {
-                    archive::job::ArchiveJobRunError::CreateFileError(e) => {
-                        log::error!("failed to create archive placeholder: {}", e);
-                        std::process::exit(1);
-                    },
+                            archive::job::ArchiveJobRunError::FileMetadataError(e) => {
+                                log::error!("failed to retrieve metadata for source: {}", e);
+                                std::process::exit(1);
+                            },
 
-                    archive::job::ArchiveJobRunError::FileMetadataError(e) => {
-                        log::error!("failed to retrieve metadata for source: {}", e);
-                        std::process::exit(1);
-                    },
-
-                    archive::job::ArchiveJobRunError::AppendToTarError(e) => {
-                        log::error!("failed to fill the archive: {}", e);
-                        std::process::exit(1);
-                    },
-                }
-            }
-        };
-    }
+                            archive::job::ArchiveJobRunError::AppendToTarError(e) => {
+                                log::error!("failed to fill the archive: {}", e);
+                                std::process::exit(1);
+                            },
+                        }
+                    }
+                };
+            },
+        }
+    });
 }

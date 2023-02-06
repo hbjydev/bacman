@@ -30,6 +30,12 @@ pub struct BacletConfig {
     pub spec: BacletConfigSpec,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum BacletJobType {
+    #[serde(rename = "archiveJob")]
+    ArchiveJob(crate::archive::schema::ArchiveJobSpec),
+}
+
 /// A specification for a backup job
 #[skip_serializing_none]
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -38,8 +44,8 @@ pub struct BacletJobSpec {
     pub name: String,
 
     /// The archive job to run
-    #[serde(rename = "archiveJob")]
-    pub archive_job: Option<crate::archive::schema::ArchiveJobSpec>,
+    #[serde(flatten)]
+    pub job_spec: BacletJobType,
 
     /// The cron-syntax schedule to run the job on
     pub schedule: String,
