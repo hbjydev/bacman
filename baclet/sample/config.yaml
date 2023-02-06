@@ -4,8 +4,9 @@ kind: BacletConfig
 
 spec:
   jobs:
-    - name: var-log
+    - name: test-backup
       schedule: '*/5 * * * *'  # every 5 minutes
       archiveJob:
-        src: /var/log
+        src: /tmp/backup
+        dest: /tmp/backup.tgz
         compression: xz
