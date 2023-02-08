@@ -15,7 +15,7 @@ spec:
 
   jobs:
     - name: xdg-config-home
-      schedule: '*/5 * * * *'  # every 5 minutes
-      destination: config-bucket
+      schedule: '* * * * * *'  # every 5 minutes
+      destination: local-dir
       archiveJob:
         src: /home/hayden/.config

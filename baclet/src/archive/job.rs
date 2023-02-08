@@ -14,9 +14,9 @@ use crate::schema::job::JobRunError;
 #[derive(Debug)]
 pub enum ArchiveJobRunError {
     MissingDestinationError,
-    TempDirCreateError(io::Error),
+    TempFileCreateError(io::Error),
     FileMetadataError(io::Error),
-    CreateFileError(io::Error),
+    OpenTempFileError(io::Error),
     AppendToTarError(io::Error),
 }
 
@@ -50,8 +50,8 @@ impl JobTypeImpl<ArchiveJob, ArchiveJobRunError> for ArchiveJob {
 
             // Generate temporary directory
             // TODO Make this base path configurable
-            let temp_file = Temp::new_dir_in("/tmp/baclet/backup").map_err(|e| JobRunError {
-                error: ArchiveJobRunError::TempDirCreateError(e),
+            let temp_file = Temp::new_file().map_err(|e| JobRunError {
+                error: ArchiveJobRunError::TempFileCreateError(e),
             })?;
 
             // Check if the destination is a directory (and if it is accessible)
@@ -63,17 +63,18 @@ impl JobTypeImpl<ArchiveJob, ArchiveJobRunError> for ArchiveJob {
             // temporary directory we just created.
             if is_dir {
                 log::debug!("creating tar.gz file");
-                let tar_gz =
-                    File::create(format!("{}/{}.tgz", temp_file.display(), &self.spec.name))
-                        .map_err(|e| JobRunError {
-                            error: ArchiveJobRunError::CreateFileError(e),
-                        })?;
+                let tar_gz = File::create(temp_file.as_path()).map_err(|e| JobRunError {
+                    error: ArchiveJobRunError::OpenTempFileError(e),
+                })?;
 
                 log::debug!("creating gz encoder");
                 let enc = GzEncoder::new(tar_gz, Compression::default());
 
                 log::debug!("filling gzipped tarball with directory contents");
                 let mut tar = tar::Builder::new(enc);
+
+                tar.follow_symlinks(true);
+
                 tar.append_dir_all(".", spec.src.clone())
                     .map_err(|e| JobRunError {
                         error: ArchiveJobRunError::AppendToTarError(e),
