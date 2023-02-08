@@ -18,9 +18,6 @@ pub struct ArchiveJobSpec {
     /// The file or folder path the archive should be created from.
     pub src: String,
 
-    /// The file or folder path the archive should be saved to.
-    pub dest: String,
-
     /// The algorithm to compress the archive with.
     #[serde(default)]
     pub compression: ArchiveJobCompression,

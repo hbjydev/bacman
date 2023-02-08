@@ -1,54 +1,22 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::path::PathBuf;
 
 use serde::{Serialize, Deserialize};
-use serde_with::skip_serializing_none;
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct ObjectVersion {
-    #[serde(rename = "apiVersion")]
-    pub api_version: String,
-    pub kind: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct ObjectMetadata {
-    pub name: String,
-    pub labels: HashMap<String, String>,
-    pub annotations: HashMap<String, String>,
-}
+use crate::destinations::schema::DestinationSpec;
+use crate::schema::job::JobSpec;
+use crate::schema::shared::ObjectVersion;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct BacletConfigSpec {
-    pub jobs: Vec<BacletJobSpec>,
+    pub destinations: Vec<DestinationSpec>,
+    pub jobs: Vec<JobSpec>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct BacletConfig {
     #[serde(flatten)]
     pub version: ObjectVersion,
-
     pub spec: BacletConfigSpec,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub enum BacletJobType {
-    #[serde(rename = "archiveJob")]
-    ArchiveJob(crate::archive::schema::ArchiveJobSpec),
-}
-
-/// A specification for a backup job
-#[skip_serializing_none]
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct BacletJobSpec {
-    /// The programmatic name of the job
-    pub name: String,
-
-    /// The archive job to run
-    #[serde(flatten)]
-    pub job_spec: BacletJobType,
-
-    /// The cron-syntax schedule to run the job on
-    pub schedule: String,
 }
 
 #[derive(Debug)]

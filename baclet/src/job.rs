@@ -1,8 +1,5 @@
-#[derive(Debug)]
-pub struct JobRunError<E> {
-    pub error: E,
-}
+use crate::schema::job::JobRunError;
 
-pub trait JobType<T, E> {
+pub trait JobTypeImpl<T, E> {
     fn run(&self) -> Result<bool, JobRunError<E>>;
 }

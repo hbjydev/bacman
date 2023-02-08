@@ -1,10 +1,14 @@
-use std::path::PathBuf;
+use std::{thread, path::PathBuf, collections::HashMap};
 
 use clap::{arg, value_parser, Command};
+
+use crate::{schema::job::JobType, destinations::schema::DestinationSpec, job::JobTypeImpl, archive::job::ArchiveJob};
 
 pub mod job;
 pub mod archive;
 pub mod config;
+pub mod schema;
+pub mod destinations;
 
 fn main() {
     let matches = Command::new("baclet")
@@ -12,12 +16,12 @@ fn main() {
         .author("Hayden Young <hayden@hbjy.dev>")
         .about("Runs the bacman agent, running backups locally on this system")
         .arg(
-            arg!(-c --config <path> "Path to the config file (default: /etc/baclet/config.yaml)")
+            arg!(-c --config <path> "Path to the config file")
                 .value_parser(value_parser!(PathBuf))
                 .default_value("/etc/baclet/config.yaml")
         )
         .arg(
-            arg!(-v --verbose "Enable verbose logging (default: false)")
+            arg!(-v --verbose "Enable verbose logging")
                 .default_value("false")
         )
         .get_matches();
@@ -57,19 +61,38 @@ fn main() {
 
     log::debug!("config: {:?}", config);
 
-    config.spec.jobs.iter().for_each(|js| {
+    log::debug!("loading destination list");
+    let mut destinations: HashMap<String, DestinationSpec> = HashMap::new();
+    config.spec.destinations.iter().for_each(|ds| {
+        log::debug!("loading destination \"{}\"", ds.name.clone());
+        destinations.insert(ds.name.clone(), ds.clone());
+    });
+
+    let mut threads: Vec<_> = Vec::new();
+
+    for job in config.spec.jobs.iter() {
+        let js = job.clone();
+
         log::info!("starting job \"{}\"", js.name);
+
         let job = match js.job_spec {
-            config::BacletJobType::ArchiveJob(_) =>
-                archive::job::ArchiveJob::init(js.clone()),
+            JobType::ArchiveJob(_) =>
+                ArchiveJob::init(js.clone(), destinations.clone()),
         };
 
-        match job::JobType::run(&job) {
-            Ok(_) => log::info!("backup job \"{}\" finished", js.name),
-            Err(e) => {
-                log::error!("failed to run backup \"{}\": {:?}", js.name, e);
-                std::process::exit(1);
-            }
-        };
-    });
+        let a = thread::spawn(move || {
+            match JobTypeImpl::run(&job) {
+                Ok(_) => log::info!("backup job \"{}\" finished", js.name),
+                Err(e) => {
+                    log::error!("failed to run backup \"{}\": {:?}", js.name, e);
+                    std::process::exit(1);
+                }
+            };
+        });
+        threads.push(a);
+    }
+
+    for thread in threads {
+        thread.join().unwrap();
+    }
 }

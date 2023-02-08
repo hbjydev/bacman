@@ -3,21 +3,19 @@ apiVersion: bacman.io/baclet/v1alpha1
 kind: BacletConfig
 
 spec:
+  destinations:
+    - name: local-dir
+      localPathDestination:
+        path: /tmp/backups
+
+    # - name: config-bucket
+    #   s3Destination:
+    #     bucket: hbjy-home-backup
+    #     prefix: config/
+
   jobs:
-    - name: test-backup
+    - name: xdg-config-home
       schedule: '*/5 * * * *'  # every 5 minutes
+      destination: config-bucket
       archiveJob:
-        src: /tmp/backup
-        dest: /tmp/backup.tgz
-
-    - name: test-backup2
-      schedule: '*/5 * * * *'  # every 5 minutes
-      archiveJob:
-        src: /tmp/backup2
-        dest: /tmp/backup2.tgz
-
-    - name: var-log
-      schedule: '*/5 * * * *'  # every 5 minutes
-      archiveJob:
-        src: /var/log
-        dest: /tmp/var-log.tgz
+        src: /home/hayden/.config
