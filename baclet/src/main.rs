@@ -9,6 +9,12 @@ use lazy_static::lazy_static;
 lazy_static! {
     static ref BACLET_RUNS_TOTAL: IntCounter =
         register_int_counter!("baclet_runs_total", "the number of times the run loop has completed").unwrap();
+
+    static ref BACLET_RUNS_SUCCESS: IntCounter =
+        register_int_counter!("baclet_job_success", "the number of times a job has succeeded").unwrap();
+
+    static ref BACLET_RUNS_FAIL: IntCounter =
+        register_int_counter!("baclet_job_fail", "the number of times a job has failed").unwrap();
 }
 
 use crate::{
@@ -127,9 +133,13 @@ fn main() {
             log::info!("starting job \"{}\"", js.name);
 
             match JobTypeImpl::run(&job) {
-                Ok(_) => log::info!("backup job \"{}\" finished", js.name),
+                Ok(_) => {
+                    log::info!("backup job \"{}\" finished", js.name);
+                    BACLET_RUNS_SUCCESS.inc();
+                }
                 Err(e) => {
                     log::error!("failed to run backup \"{}\": {:?}", js.name, e);
+                    BACLET_RUNS_FAIL.inc();
                 }
             };
         }));
