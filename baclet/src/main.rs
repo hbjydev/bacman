@@ -1,7 +1,9 @@
-use std::{collections::HashMap, path::PathBuf, time::Duration};
+use std::{collections::HashMap, path::PathBuf, time::Duration, sync::mpsc};
 
+use actix_web::{dev::ServerHandle, web, middleware, App, HttpServer, HttpResponse, http::header};
 use clap::{arg, value_parser, Command};
 use job_scheduler::{Job, JobScheduler};
+use prometheus::TextEncoder;
 
 use crate::{
     archive::job::ArchiveJob, destinations::schema::DestinationSpec, job::JobTypeImpl,
@@ -13,6 +15,33 @@ pub mod config;
 pub mod destinations;
 pub mod job;
 pub mod schema;
+
+async fn metrics() -> HttpResponse {
+    let encoder = TextEncoder::new();
+    let mut buffer = String::new();
+    encoder
+        .encode_utf8(&prometheus::gather(), &mut buffer)
+        .expect("failed to encode metrics");
+
+    HttpResponse::Ok()
+        .insert_header(header::ContentType::plaintext())
+        .body(buffer)
+}
+
+async fn run_http(tx: mpsc::Sender<ServerHandle>) -> std::io::Result<()> {
+    let server = HttpServer::new(|| {
+        App::new()
+            .wrap(middleware::Logger::default())
+            .service(web::resource("/metrics").to(metrics))
+    })
+    .bind(("0.0.0.0", 6969))?
+    .workers(1)
+    .run();
+
+    let _ = tx.send(server.handle());
+
+    server.await
+}
 
 fn main() {
     let matches = Command::new("baclet")
@@ -67,6 +96,20 @@ fn main() {
     });
 
     let mut sched = JobScheduler::new();
+    let (tx, rx) = mpsc::channel();
+    let (stop_tx, stop_rx) = mpsc::channel();
+
+    std::thread::spawn(move || {
+        let server_future = run_http(tx);
+        actix_web::rt::System::new().block_on(server_future)
+    });
+
+    let server_handle = rx.recv().unwrap();
+
+    ctrlc::set_handler(move || {
+        stop_tx.send(true).unwrap();
+    })
+    .expect("error setting ctrl+c handler");
 
     for job in config.spec.jobs.iter() {
         let js = job.clone();
@@ -81,13 +124,25 @@ fn main() {
                 Ok(_) => log::info!("backup job \"{}\" finished", js.name),
                 Err(e) => {
                     log::error!("failed to run backup \"{}\": {:?}", js.name, e);
-                    std::process::exit(1);
                 }
             };
         }));
     }
 
     loop {
+        match stop_rx.try_recv() {
+            Ok(_) => {
+                actix_web::rt::System::new().block_on(server_handle.stop(true));
+                break;
+            },
+            Err(e) => {
+                match e {
+                    mpsc::TryRecvError::Empty => (),
+                    mpsc::TryRecvError::Disconnected => std::process::exit(1),
+                }
+            },
+        };
+
         sched.tick();
 
         std::thread::sleep(Duration::from_millis(500));
