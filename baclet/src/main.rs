@@ -3,7 +3,13 @@ use std::{collections::HashMap, path::PathBuf, time::Duration, sync::mpsc};
 use actix_web::{dev::ServerHandle, web, middleware, App, HttpServer, HttpResponse, http::header};
 use clap::{arg, value_parser, Command};
 use job_scheduler::{Job, JobScheduler};
-use prometheus::TextEncoder;
+use prometheus::{self, IntCounter, TextEncoder, Counter, Opts, register_int_counter};
+use lazy_static::lazy_static;
+
+lazy_static! {
+    static ref BACLET_RUNS_TOTAL: IntCounter =
+        register_int_counter!("baclet_runs_total", "the number of times the run loop has completed").unwrap();
+}
 
 use crate::{
     archive::job::ArchiveJob, destinations::schema::DestinationSpec, job::JobTypeImpl,
@@ -144,6 +150,8 @@ fn main() {
         };
 
         sched.tick();
+
+        BACLET_RUNS_TOTAL.inc();
 
         std::thread::sleep(Duration::from_millis(500));
     }

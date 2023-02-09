@@ -273,6 +273,7 @@ dependencies = [
  "env_logger",
  "flate2",
  "job_scheduler",
+ "lazy_static",
  "log",
  "mktemp",
  "prometheus",
