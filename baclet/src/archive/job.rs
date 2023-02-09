@@ -39,7 +39,7 @@ impl ArchiveJob {
 impl JobTypeImpl<ArchiveJob, ArchiveJobRunError> for ArchiveJob {
     fn run(&self) -> Result<bool, JobRunError<ArchiveJobRunError>> {
         let maybe_dest = self.dests.get(&self.spec.destination);
-        if let None = maybe_dest {
+        if maybe_dest.is_none() {
             return Err(JobRunError {
                 error: ArchiveJobRunError::MissingDestinationError,
             });

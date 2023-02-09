@@ -30,7 +30,7 @@ impl LocalPath {
     pub fn ensure(&self) -> Result<(), LocalPathEnsureError> {
         let exists = path::Path::new(&self.spec.path.clone()).exists();
         if !exists {
-            fs::create_dir(&self.spec.path.clone())?;
+            fs::create_dir(self.spec.path.clone())?;
         } else {
             let stat = fs::metadata(self.spec.path.clone())?;
             if !stat.is_dir() {

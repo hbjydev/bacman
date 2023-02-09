@@ -3,7 +3,7 @@ use std::{collections::HashMap, path::PathBuf, time::Duration, sync::mpsc};
 use actix_web::{dev::ServerHandle, web, middleware, App, HttpServer, HttpResponse, http::header};
 use clap::{arg, value_parser, Command};
 use job_scheduler::{Job, JobScheduler};
-use prometheus::{self, IntCounter, TextEncoder, Counter, Opts, register_int_counter};
+use prometheus::{self, IntCounter, TextEncoder, register_int_counter};
 use lazy_static::lazy_static;
 
 lazy_static! {
