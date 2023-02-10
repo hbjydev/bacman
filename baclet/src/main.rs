@@ -145,6 +145,10 @@ fn main() {
         }));
     }
 
+    BACLET_RUNS_SUCCESS.reset();
+    BACLET_RUNS_FAIL.reset();
+    BACLET_RUNS_TOTAL.reset();
+
     loop {
         match stop_rx.try_recv() {
             Ok(_) => {
