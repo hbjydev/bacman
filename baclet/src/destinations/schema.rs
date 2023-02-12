@@ -1,4 +1,5 @@
 use serde::{Serialize, Deserialize};
+use anyhow::Result;
 
 use super::local_path::LocalPathDestinationSpec;
 
@@ -14,4 +15,8 @@ pub struct DestinationSpec {
 
     #[serde(flatten)]
     pub destination_spec: DestinationType,
+}
+
+pub trait DestinationTypeImpl {
+    fn send(&self, path: &str) -> Result<bool>;
 }

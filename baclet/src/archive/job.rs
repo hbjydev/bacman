@@ -45,6 +45,7 @@ impl JobTypeImpl<ArchiveJob, ArchiveJobRunError> for ArchiveJob {
             });
         } else {
             let dest = maybe_dest.unwrap();
+
             log::debug!("Shipping backup to destination \"{}\"", dest.name);
             let JobType::ArchiveJob(spec) = &self.spec.job_spec;
 
